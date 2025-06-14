@@ -33,14 +33,19 @@ describe ('Step 1: All blogs returned as JSON', () =>
     })
 })
 
-    // test('a specific blog is within the returned blogs', async () =>
-    // {
-    //     const res = await api.get('/api/blogs')
-    //     const titles = res.body.map(e => e.title)
-    //     assert.strictEqual(titles.includes('HTML is too Easy'), true)
-    // })
-        
-    // test('a specific blog can be viewed', async () =>
+describe ('Step 2: Verify the unique identifier is "ID"', () =>
+{
+    test('Inspect a specific blogs attributes', async () =>
+    {
+        const blogsAtStart = await helper.blogsInDb()
+        const blogToView = blogsAtStart[0]
+
+        assert(Object.keys(blogToView).includes('id'))
+        assert(!Object.keys(blogToView).includes('_id'))
+    })
+})
+
+    // test('Inspect a specific blogs attributes', async () =>
     // {
     //     const blogsAtStart = await helper.blogsInDb()
     //     const blogToView = blogsAtStart[0]
@@ -54,6 +59,14 @@ describe ('Step 1: All blogs returned as JSON', () =>
     //     console.log('resultBlog.body ', resultBlog.body)
     //     assert.deepStrictEqual(resultBlog.body, blogToView)
     // })
+
+    // test('a specific blog is within the returned blogs', async () =>
+    // {
+    //     const res = await api.get('/api/blogs')
+    //     const titles = res.body.map(e => e.title)
+    //     assert.strictEqual(titles.includes('HTML is too Easy'), true)
+    // })
+        
                     
 // describe ('About Adding Blogs: Valid and Denying Invalid', () =>
 // {
