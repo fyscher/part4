@@ -5,17 +5,17 @@ const blogSchema = new mongoose.Schema({
     author: String,
     url: String,
     likes: Number,
-  })
+})
   
-  blogSchema.set('toJSON',
+blogSchema.set('toJSON',
+{
+  transform: (document, returnedObj) =>
   {
-    transform: (document, returnedObj) =>
-    {
-      returnedObj.id = returnedObj._id.toString()
-      delete returnedObj._id
-      delete returnedObj.__v
-    }
-  })
+    returnedObj.id = returnedObj._id.toString()
+    delete returnedObj._id
+    delete returnedObj.__v
+  }
+})
   
 module.exports = mongoose.model('Blog', blogSchema)
   
