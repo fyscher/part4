@@ -31,7 +31,13 @@ const blogsInDb = async () =>
     return blogs.map(b => b.toJSON())
 }
 
+const findBlog = async (title) =>
+{
+    const blog = await Blog.find({title})
+    return blog
+}
+
 module.exports = 
 {
-    initialBlogs, nonExistingId, blogsInDb
+    initialBlogs, nonExistingId, blogsInDb, findBlog
 }

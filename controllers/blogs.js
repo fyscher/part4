@@ -23,10 +23,10 @@ blogsRouter.post('/', async (request, response) =>
 {
   const body = request.body;
 
-  if (!body.title)
+  if (!body.title || !body.url)
   {
-    logger.info('No Title!')
-    logger.error('400: Must include Title')
+    logger.info('No Title or URL!')
+    logger.error('400: Must include both Title and URL')
     response.status(400).json('Bad Request')
   }
   else
@@ -35,7 +35,7 @@ blogsRouter.post('/', async (request, response) =>
       title: body.title,
       author: body.author,
       url: body.url,
-      likes: body.likes,
+      likes: body.likes? body.likes : 0,
     })
     const savedBlog = await blog.save()
     response.status(201).json(savedBlog)
