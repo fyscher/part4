@@ -5,6 +5,8 @@ const supertest = require('supertest')
 const app = require('../app')
 const helper = require('./test_helper')
 const Blog = require('../models/blog')
+const { update } = require('lodash')
+const { title } = require('node:process')
 
 const api = supertest(app)
 
@@ -162,6 +164,28 @@ describe.only('Exercises 4.13 - 4.14:', () =>
         assert(!titles.includes(blogToDelete.title))
         assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length - 1)
     })
+
+    test('a blog can be updated by id', async () =>
+    {
+        const blogsAtStart = await helper.blogsInDb()
+        const updateBlog = blogsAtStart[0]
+        const updatedBlog = 
+        {   
+            title: updateBlog.title,
+            author: updateBlog.author,
+            url: updateBlog.url,
+            likes: 69
+        }
+
+        await api
+            .put(`/api/blogs/${updateBlog.id}`)
+            .send(updatedBlog)
+            .expect(204)
+
+        const foundBlog = await helper.findBlog('HTML is easy')
+        assert.strictEqual(foundBlog[0].likes, updatedBlog.likes)
+    })
+
 })
 
 after(async () => await mongoose.connection.close())
