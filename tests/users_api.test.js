@@ -6,8 +6,6 @@ const app = require('../app')
 const helper = require('./test_helper')
 const User = require('../models/user')
 const bcrypt = require('bcrypt')
-
-
 const api = supertest(app)
 
 describe.only('when there is initially one user in db', () =>
@@ -68,6 +66,52 @@ describe.only('when there is initially one user in db', () =>
         assert(result.body.error.includes('expected `username` to be unique'))
 
         assert.strictEqual(usersAtEnd.length, usersAtStart.length)
+    })
+
+    test('creation fails if username received is below the minimum character length', async () =>
+    {
+        const usersAtStart = await helper.usersInDb()
+
+        const newUser = 
+        {
+            username: 'R',
+            name: 'oot',
+            password: 'foooookenell'
+        }
+
+        const result = await api
+            .post('/api/users')
+            .send(newUser)
+            .expect(400)
+            .expect('Content-Type', /application\/json/)
+        
+        const usersAtEnd = await helper.usersInDb()
+
+        assert(result.body.error.includes('username and password must be a minimum of 3 characters'))
+        assert.deepStrictEqual(usersAtEnd, usersAtStart)
+    })
+    
+    test('creation fails if password received is below the minimum character length', async () =>
+    {
+        const usersAtStart = await helper.usersInDb()
+
+        const newUser = 
+        {
+            username: 'Root',
+            name: 'oot',
+            password: 'f'
+        }
+
+        const result = await api
+            .post('/api/users')
+            .send(newUser)
+            .expect(400)
+            .expect('Content-Type', /application\/json/)
+        
+        const usersAtEnd = await helper.usersInDb()
+
+        assert(result.body.error.includes('username and password must be a minimum of 3 characters'))
+        assert.deepStrictEqual(usersAtEnd, usersAtStart)
     })
 })
 
