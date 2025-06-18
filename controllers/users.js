@@ -1,28 +1,33 @@
 const usersRouter = require('express').Router()
 const bcrypt = require('bcrypt')
 const User = require('../models/user')
+const helper = require('../tests/test_helper')
 
 usersRouter.post('/', async (request, response) =>
 {
     const { username, name, password } = request.body
-
-    if (username.length < 3 || password.length < 3)
+    if (password.length > 3)
     {
-        response.status(400).json({error: 'username and password must be a minimum of 3 characters'})
+        const users = await helper.usersInDb()
+        if (!users.includes(username))
+        {
+
+            const saltRounds = 10
+            const passwordHash = await bcrypt.hash(password, saltRounds)
+            
+            const user = new User({
+                username,
+                name,
+                passwordHash,
+            })
+            
+            const savedUser = await user.save()
+            
+            response.status(201).json(savedUser)
+        }
     }
-    
-    const saltRounds = 10
-    const passwordHash = await bcrypt.hash(password, saltRounds)
+    response.status(400).json({error: 'Password too short'})
 
-    const user = new User({
-        username,
-        name,
-        passwordHash,
-    })
-
-    const savedUser = await user.save()
-
-    response.status(201).json(savedUser)
 })
 
 usersRouter.get('/', async (request, response) =>

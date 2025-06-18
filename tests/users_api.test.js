@@ -16,6 +16,7 @@ describe.only('when there is initially one user in db', () =>
 
         const passwordHash = await bcrypt.hash('sekret', 10)
         const user = new User({ username: 'root', passwordHash })
+        console.log('hash ', passwordHash)
 
         await user.save()
     })
@@ -63,7 +64,7 @@ describe.only('when there is initially one user in db', () =>
 
         const usersAtEnd = await helper.usersInDb()
 
-        assert(result.body.error.includes('expected `username` to be unique'))
+        assert(result.body.error.includes('E11000 duplicate key error collection'))
 
         assert.strictEqual(usersAtEnd.length, usersAtStart.length)
     })
@@ -87,7 +88,7 @@ describe.only('when there is initially one user in db', () =>
         
         const usersAtEnd = await helper.usersInDb()
 
-        assert(result.body.error.includes('username and password must be a minimum of 3 characters'))
+        assert(result.body.error.includes('User validation failed: username: Path `username`'))
         assert.deepStrictEqual(usersAtEnd, usersAtStart)
     })
     
@@ -110,7 +111,7 @@ describe.only('when there is initially one user in db', () =>
         
         const usersAtEnd = await helper.usersInDb()
 
-        assert(result.body.error.includes('username and password must be a minimum of 3 characters'))
+        assert(result.body.error.includes('Password too short'))
         assert.deepStrictEqual(usersAtEnd, usersAtStart)
     })
 })
