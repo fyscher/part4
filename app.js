@@ -6,6 +6,7 @@ const logger = require('./utils/logger')
 const config = require('./utils/config')
 const blogsRouter = require('./controllers/blogs')
 const usersRouter = require('./controllers/users')
+const loginRouter = require('./controllers/login')
 const mongoose = require('mongoose')
 
 const errorHandler = (error, req, res, next) =>
@@ -14,21 +15,23 @@ const errorHandler = (error, req, res, next) =>
   switch (error.name)
   {
     case 'CastError':
-      res.status(400).json({ error: 'Malformatted Id' })
-      break
+      return res.status(400).json({ error: 'Malformatted Id' })
     case 'ValidationError':
-      res.status(400).json({ error: error.message })
-      break
+      return res.status(400).json({ error: error.message })
     case 'MongoServerError':
       if (error.errmsg.includes('E11000 duplicate key error collection'))
       {
         console.log('error code: ', error.code)
         console.log('error errmsg: ', error.errmsg)
-        res.status(400).json({ error: 'expected `username` to be unique' })
+        return res.status(400).json({ error: 'expected `username` to be unique' })
       } else
       {
-        res.status(400).json({ error: 'Mongojs Server Error' })
+        return res.status(400).json({ error: 'Mongojs Server Error' })
       }
+    case 'JsonWebTokenError':
+      return res.status(401).json({ error: 'invalid token' })
+    case 'TokenExpiredError':
+      return res.status(401).json({ error: 'token expired' })
   }
   next(error)
 }
@@ -37,6 +40,7 @@ app.use(cors())
 app.use(express.json())
 app.use('/api/blogs', blogsRouter)
 app.use('/api/users', usersRouter)
+app.use('/api/login', loginRouter)
 
 logger.info('Connecting to MongoDB: ', config.MONGODB_URI)
 mongoose.set('strictQuery', false)
