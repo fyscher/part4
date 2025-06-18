@@ -5,13 +5,20 @@ const supertest = require('supertest')
 const app = require('../app')
 const helper = require('./test_helper')
 const Blog = require('../models/blog')
-const { update } = require('lodash')
-const { title } = require('node:process')
+const User = require('../models/user')
+const bcrypt = require('bcrypt')
 
 const api = supertest(app)
 
 beforeEach(async () =>
 {
+    await User.deleteMany({})
+
+    const passwordHash = await bcrypt.hash('sekret', 10)
+    const user = new User({ username: 'root', passwordHash })
+
+    await user.save()
+
     await Blog.deleteMany({})
     console.log('Database Cleared')
 
@@ -49,14 +56,19 @@ describe('Step 2: Verify the unique identifier is "ID"', () =>
 
 describe('Step 3: Add a blog post to DB', () =>
 {
-    test('a valid blog can be added ', async () =>
+    test.only('a valid blog can be added ', async () =>
     {
+        const users = await helper.usersInDb()
+        const user = users[0]
+
+        console.log('users: ', users)
         const newBlog =
         {
             title: 'WE HERE TO TEST',
             author: 'Fyscher',
             url: 'www.com',
-            likes: 123
+            likes: 123,
+            user: user.id
         }
 
         await api
@@ -65,18 +77,26 @@ describe('Step 3: Add a blog post to DB', () =>
             .expect(201)
             .expect('Content-Type', /application\/json/)
             
+        // console.log('result: ', result)
         const blogsAtEnd = await helper.blogsInDb()
         assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length + 1)
         
+        const updatedDB = [...helper.initialBlogs, newBlog]
         // strip the 'id' attribute to test deepStrictEqual
         const dataAtEnd = blogsAtEnd.reduce((acc, obj) =>
-            {
-                const { id: remove, ...rest } = obj
-                acc.push(rest)
-                return acc
-            }, [])
-        const updatedDB = [...helper.initialBlogs, newBlog]
-        assert.deepStrictEqual(updatedDB, dataAtEnd)
+        {
+            const { id: remove, ...rest } = obj
+            acc.push(rest)
+            return acc
+        }, [])
+        const updatedDBAtEnd = updatedDB.reduce((acc, obj) =>
+        {
+            const { user: remove, ...rest } = obj
+            acc.push(rest)
+            return acc
+        }, [])
+
+        assert.deepStrictEqual(dataAtEnd, updatedDBAtEnd)
         
         const titles = blogsAtEnd.map(r => r.title)
         assert(titles.includes('WE HERE TO TEST'))
@@ -89,11 +109,15 @@ describe('Step 4 and 5: Handle Missing Information', () =>
 {
     test('a blog without a title cannot be added ', async () =>
     {
+        const users = await User.find({})
+        const user = users[0]
+        console.log('user: ', user)
         const newBlog = 
         {
             author: 'Mr. NoTitle',
             url: 'www.com',
-            likes: 55
+            likes: 55,
+            user: user._id
         }
 
         await api
@@ -146,7 +170,7 @@ describe('Step 4 and 5: Handle Missing Information', () =>
     })
 })
         
-describe.only('Exercises 4.13 - 4.14:', () =>
+describe('Exercises 4.13 - 4.14:', () =>
 {
     test('a blog can be deleted by id', async () =>
     {
