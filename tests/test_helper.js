@@ -3,19 +3,49 @@ const User = require('../models/user')
 
 const initialBlogs = 
 [
+  {
+    "title": "HTML is easy",
+    "author": "FB Red",
+    "url": "www.com",
+    "likes": 6969,
+    "id": "6854e361bedc5a77b6a9b6da"
+  },
+  {
+    "title": "HTML is too easy",
+    "author": "FB Blue",
+    "url": "www.420.com",
+    "likes": 420,
+    "id": "6854e379bedc5a77b6a9b6de"
+  }
+]
+
+const initialUserLogins =
+[
     {
-        title: 'HTML is easy',
-        author: 'FB Red',
-        url: 'www.com',
-        likes: 6969,
-        user: "68519d3f18bb2e60278ae9b6"
+        "username": "fyscher",
+        "password": "test"
     },
     {
-        title: 'HTML is too Easy',
-        author: 'FB Blue',
-        url: 'www.420.com',
-        likes: 420,
-        user: "6851aad2772dab9ef197f41d"
+        "username": "Fyschman",
+        "password": "test2"
+    }
+]
+
+const initialUsers = 
+[
+    {
+        "username": "Fyschman",
+        "name": "fyschman",
+        "blogs": [],
+        "passwordHash": "$2b$10$.RzXjsjdkSsv/1N3i7wQDu3Gg.lUArmfxW2BJYo9qJqUazi.ahLy2",
+        "id": "6854e69bca75c1280332731f"
+    },
+    {
+        "username": "fyscher",
+        "name": "fyschman",
+        "blogs": [],
+        "passwordHash": "$2b$10$wqi.a7Hg0AbzkuDcnuLjpOW8DswtYY7DeStYm7mU92biPnI.XmcxK",
+        "id": "6854e6b0ca75c12803327323"
     }
 ]
 
@@ -48,5 +78,5 @@ const usersInDb = async () =>
 
 module.exports = 
 {
-    initialBlogs, nonExistingId, blogsInDb, findBlog, usersInDb,
+    initialBlogs, initialUserLogins, initialUsers, nonExistingId, blogsInDb, findBlog, usersInDb,
 }

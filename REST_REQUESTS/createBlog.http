@@ -1,0 +1,10 @@
+POST http://localhost:3001/api/blogs
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6IkZ5c2NobWFuIiwiaWQiOiI2ODU0ZTMzMGJlZGM1YTc3YjZhOWI2ZDYiLCJpYXQiOjE3NTAzOTM2NjAsImV4cCI6MTc1MDM5NzI2MH0.UZROW8I6V7YNq-lzdj-u-bVWWCqkhgJp_xiJNm3HnEw
+
+{
+    "title": "HTML is too easy",
+    "author": "FB Blue",
+    "url": "www.420.com",
+    "likes": 420
+}

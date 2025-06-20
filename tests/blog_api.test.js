@@ -10,17 +10,17 @@ const bcrypt = require('bcrypt')
 
 const api = supertest(app)
 
+// fix this!
+// users not added properly before each test
 beforeEach(async () =>
 {
     await User.deleteMany({})
+    console.log('Users Cleared')
 
-    const passwordHash = await bcrypt.hash('sekret', 10)
-    const user = new User({ username: 'root', passwordHash })
-
-    await user.save()
+    await User.insertMany(helper.initialUsers)
 
     await Blog.deleteMany({})
-    console.log('Database Cleared')
+    console.log('Blogs Cleared')
 
     await Blog.insertMany(helper.initialBlogs)
 })
@@ -56,7 +56,7 @@ describe('Step 2: Verify the unique identifier is "ID"', () =>
 
 describe('Step 3: Add a blog post to DB', () =>
 {
-    test.only('a valid blog can be added ', async () =>
+    test('a valid blog can be added ', async () =>
     {
         const users = await helper.usersInDb()
         const user = users[0]
@@ -210,6 +210,32 @@ describe('Exercises 4.13 - 4.14:', () =>
         assert.strictEqual(foundBlog[0].likes, updatedBlog.likes)
     })
 
+})
+
+describe('How well Tokens are handled:', () =>
+{
+    test.only('A blog shouldn`t be deleted unless correct token is present', async () =>
+    {
+        const blogsAtStart = await helper.blogsInDb()
+        const blogToDelete = blogsAtStart[0]
+
+        const loggedInUser = await api
+            .post('/api/login')
+            .send(helper.initialUserLogins[0])
+
+        const wrongToken = loggedInUser._body.token
+
+        const result = await api
+            .delete(`/api/blogs/${blogToDelete.id}`)
+            .set('Authorization', `Bearer ${wrongToken}`)
+            .expect(401)
+
+        const blogsAtEnd = await helper.blogsInDb()
+
+        console.log('result.error: ', result.error)
+
+        assert.deepStrictEqual(blogsAtStart, blogsAtEnd)
+    })
 })
 
 after(async () => await mongoose.connection.close())
