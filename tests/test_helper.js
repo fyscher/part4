@@ -26,15 +26,22 @@ const createFyscher =
     "password": "testy"
 }
 
+const createFyschman =
+{
+    "username": "Fyschman",
+    "name": "Fyschman",
+    "password": "testerrr"
+}
+
 const initialUserLogins =
 [
     {
         "username": "fyscher",
-        "password": "test"
+        "password": "testy"
     },
     {
         "username": "Fyschman",
-        "password": "test2"
+        "password": "testerrr"
     }
 ]
 
@@ -74,4 +81,5 @@ module.exports =
     findBlog,
     usersInDb,
     createFyscher,
+    createFyschman
 }

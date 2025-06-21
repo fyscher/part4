@@ -9,8 +9,6 @@ const User = require('../models/user')
 
 const api = supertest(app)
 
-// fix this!
-// one user added, one to go...
 beforeEach(async () =>
 {
     await User.deleteMany({})
@@ -19,14 +17,18 @@ beforeEach(async () =>
     await Blog.deleteMany({})
     console.log('Blogs Cleared')
 
-    await Blog.insertMany(helper.initialBlogs)
-    console.log('Inserted Initial Blogs')
-    
+    // create both users
     await api
         .post('/api/users')
         .send(helper.createFyscher)
         .expect(201)
 
+    await api
+        .post('/api/users')
+        .send(helper.createFyschman)
+        .expect(201)
+    
+    // log in fyscher
     const loggedInFyscher = await api
         .post('/api/login')
         .send({
@@ -36,20 +38,69 @@ beforeEach(async () =>
         .expect(200)
 
     const fyscher = loggedInFyscher.request.response._body
-    console.log(`logged in!`)
+    console.log('')
+    console.log('------------')
+    console.log(`fyscher logged in!`)
+    console.log('------------')
     console.log('fyscher: ', fyscher)
 
+    
+    // log in fyschman
+    const loggedInFyschman = await api
+    .post('/api/login')
+    .send({
+        "username": helper.createFyschman.username,
+        "password": helper.createFyschman.password
+    })
+    .expect(200)
+    
+    const fyschman = loggedInFyschman.request.response._body
+    console.log('')
+    console.log('------------')
+    console.log('fyschman logged in!')
+    console.log('------------')
+    console.log('fyschman: ', fyschman)
+    
+    // init and create a blog each
+    const newBlog1 =
+    {
+        title: 'HTML is easy',
+        author: 'FB Red',
+        url: 'www.com',
+        likes: 6969,
+    }
+
+    const newBlog2 =
+    {
+        title: 'HTML is too easy',
+        author: 'FB Blue',
+        url: 'www.420.com',
+        likes: 420,
+    }
+
+    await api
+        .post('/api/blogs')
+        .set('Authorization', `Bearer ${fyscher.token}`)
+        .send(newBlog1)
+        .expect(201)
+
+    await api
+        .post('/api/blogs')
+        .set('Authorization', `Bearer ${fyschman.token}`)
+        .send(newBlog2)
+        .expect(201)
 })
 
 describe('Step 1: All blogs returned as JSON', () =>
 {
-    test('all blogs are returned', async () =>
+    test.only('all blogs are returned', async () =>
     {
+        const blogs = await helper.blogsInDb()
         const res = await api.get('/api/blogs')
-        assert.strictEqual(res.body.length, helper.initialBlogs.length)
+        assert.deepStrictEqual(res.body, blogs)
     })
 
-    test('blogs are returned as json', async () =>
+    test.only('blogs are returned as json', async () =>
     {
         await api
         .get('/api/blogs')
@@ -229,7 +280,7 @@ describe('Exercises 4.13 - 4.14:', () =>
 
 describe('How well Tokens are handled:', () =>
 {
-    test.only('A blog shouldn`t be deleted unless correct token is present', async () =>
+    test('A blog shouldn`t be deleted unless correct token is present', async () =>
     {
         const blogsAtStart = await helper.blogsInDb()
         const blogToDelete = blogsAtStart[0]
