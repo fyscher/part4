@@ -19,6 +19,13 @@ const initialBlogs =
   }
 ]
 
+const createFyscher = 
+{
+    "username": "fyscher",
+    "name": "fyscher",
+    "password": "testy"
+}
+
 const initialUserLogins =
 [
     {
@@ -28,24 +35,6 @@ const initialUserLogins =
     {
         "username": "Fyschman",
         "password": "test2"
-    }
-]
-
-const initialUsers = 
-[
-    {
-        "username": "Fyschman",
-        "name": "fyschman",
-        "blogs": [],
-        "passwordHash": "$2b$10$.RzXjsjdkSsv/1N3i7wQDu3Gg.lUArmfxW2BJYo9qJqUazi.ahLy2",
-        "id": "6854e69bca75c1280332731f"
-    },
-    {
-        "username": "fyscher",
-        "name": "fyschman",
-        "blogs": [],
-        "passwordHash": "$2b$10$wqi.a7Hg0AbzkuDcnuLjpOW8DswtYY7DeStYm7mU92biPnI.XmcxK",
-        "id": "6854e6b0ca75c12803327323"
     }
 ]
 
@@ -78,5 +67,11 @@ const usersInDb = async () =>
 
 module.exports = 
 {
-    initialBlogs, initialUserLogins, initialUsers, nonExistingId, blogsInDb, findBlog, usersInDb,
+    initialBlogs,
+    initialUserLogins,
+    nonExistingId,
+    blogsInDb,
+    findBlog,
+    usersInDb,
+    createFyscher,
 }

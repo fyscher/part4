@@ -6,23 +6,39 @@ const app = require('../app')
 const helper = require('./test_helper')
 const Blog = require('../models/blog')
 const User = require('../models/user')
-const bcrypt = require('bcrypt')
 
 const api = supertest(app)
 
 // fix this!
-// users not added properly before each test
+// one user added, one to go...
 beforeEach(async () =>
 {
     await User.deleteMany({})
     console.log('Users Cleared')
 
-    await User.insertMany(helper.initialUsers)
-
     await Blog.deleteMany({})
     console.log('Blogs Cleared')
 
     await Blog.insertMany(helper.initialBlogs)
+    console.log('Inserted Initial Blogs')
+    
+    await api
+        .post('/api/users')
+        .send(helper.createFyscher)
+        .expect(201)
+
+    const loggedInFyscher = await api
+        .post('/api/login')
+        .send({
+            "username": helper.createFyscher.username,
+            "password": helper.createFyscher.password
+        })
+        .expect(200)
+
+    const fyscher = loggedInFyscher.request.response._body
+    console.log(`logged in!`)
+    console.log('fyscher: ', fyscher)
+
 })
 
 describe('Step 1: All blogs returned as JSON', () =>
@@ -77,7 +93,6 @@ describe('Step 3: Add a blog post to DB', () =>
             .expect(201)
             .expect('Content-Type', /application\/json/)
             
-        // console.log('result: ', result)
         const blogsAtEnd = await helper.blogsInDb()
         assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length + 1)
         
@@ -218,10 +233,6 @@ describe('How well Tokens are handled:', () =>
     {
         const blogsAtStart = await helper.blogsInDb()
         const blogToDelete = blogsAtStart[0]
-
-        const loggedInUser = await api
-            .post('/api/login')
-            .send(helper.initialUserLogins[0])
 
         const wrongToken = loggedInUser._body.token
 

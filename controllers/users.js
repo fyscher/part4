@@ -20,9 +20,9 @@ usersRouter.post('/', async (request, response) =>
                 name,
                 passwordHash,
             })
-            console.log('hash: ', passwordHash)
+            console.log(`hash for ${username}: `, passwordHash)
             const savedUser = await user.save()
-            
+            console.log(`new user ${username} saved!`)
             response.status(201).json(savedUser)
         }
     }
