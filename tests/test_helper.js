@@ -1,49 +1,19 @@
 const Blog = require('../models/blog')
 const User = require('../models/user')
 
-const initialBlogs = 
-[
-  {
-    "title": "HTML is easy",
-    "author": "FB Red",
-    "url": "www.com",
-    "likes": 6969,
-    "id": "6854e361bedc5a77b6a9b6da"
-  },
-  {
-    "title": "HTML is too easy",
-    "author": "FB Blue",
-    "url": "www.420.com",
-    "likes": 420,
-    "id": "6854e379bedc5a77b6a9b6de"
-  }
-]
-
-const createFyscher = 
+const Fyscher = 
 {
     "username": "fyscher",
     "name": "fyscher",
     "password": "testy"
 }
 
-const createFyschman =
+const Fyschman =
 {
     "username": "Fyschman",
     "name": "Fyschman",
     "password": "testerrr"
 }
-
-const initialUserLogins =
-[
-    {
-        "username": "fyscher",
-        "password": "testy"
-    },
-    {
-        "username": "Fyschman",
-        "password": "testerrr"
-    }
-]
 
 const nonExistingId = async () =>
 {
@@ -68,18 +38,16 @@ const findBlog = async (title) =>
 
 const usersInDb = async () =>
 {
-    const users = await User.find({})
+    const users = await User.find({}).populate('blogs', { title: 1, author: 1, url: 1, likes: 1 })
     return users.map(u => u.toJSON())
 }
 
 module.exports = 
 {
-    initialBlogs,
-    initialUserLogins,
     nonExistingId,
     blogsInDb,
     findBlog,
     usersInDb,
-    createFyscher,
-    createFyschman
+    Fyscher,
+    Fyschman
 }

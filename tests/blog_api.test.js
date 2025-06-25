@@ -6,7 +6,6 @@ const app = require('../app')
 const helper = require('./test_helper')
 const Blog = require('../models/blog')
 const User = require('../models/user')
-const { values } = require('lodash')
 
 const api = supertest(app)
 
@@ -21,46 +20,39 @@ beforeEach(async () =>
     // create both users
     await api
         .post('/api/users')
-        .send(helper.createFyscher)
+        .set('Content-Type', 'application/json')
+        .send(helper.Fyscher)
         .expect(201)
 
     await api
         .post('/api/users')
-        .send(helper.createFyschman)
+        .set('Content-Type', 'application/json')
+        .send(helper.Fyschman)
         .expect(201)
     
     // log in fyscher
     const loggedInFyscher = await api
         .post('/api/login')
+        .set('Content-Type', 'application/json')
         .send({
-            "username": helper.createFyscher.username,
-            "password": helper.createFyscher.password
+            "username": helper.Fyscher.username,
+            "password": helper.Fyscher.password
         })
         .expect(200)
 
     const fyscher = loggedInFyscher.request.response._body
-    console.log('')
-    console.log('------------')
-    console.log(`fyscher logged in!`)
-    console.log('------------')
-    console.log('fyscher: ', fyscher)
-
     
     // log in fyschman
     const loggedInFyschman = await api
     .post('/api/login')
+    .set('Content-Type', 'application/json')
     .send({
-        "username": helper.createFyschman.username,
-        "password": helper.createFyschman.password
+        "username": helper.Fyschman.username,
+        "password": helper.Fyschman.password
     })
     .expect(200)
     
     const fyschman = loggedInFyschman.request.response._body
-    console.log('')
-    console.log('------------')
-    console.log('fyschman logged in!')
-    console.log('------------')
-    console.log('fyschman: ', fyschman)
     
     // init and create a blog each
     const newBlog1 =
@@ -81,12 +73,14 @@ beforeEach(async () =>
 
     await api
         .post('/api/blogs')
+        .set('Content-Type', 'application/json')
         .set('Authorization', `Bearer ${fyscher.token}`)
         .send(newBlog1)
         .expect(201)
 
     await api
         .post('/api/blogs')
+        .set('Content-Type', 'application/json')
         .set('Authorization', `Bearer ${fyschman.token}`)
         .send(newBlog2)
         .expect(201)
@@ -94,14 +88,14 @@ beforeEach(async () =>
 
 describe('Step 1: All blogs returned as JSON', () =>
 {
-    test.only('all blogs are returned', async () =>
+    test('all blogs are returned', async () =>
     {
         const blogs = await helper.blogsInDb()
         const res = await api.get('/api/blogs')
         assert.deepStrictEqual(res.body, blogs)
     })
 
-    test.only('blogs are returned as json', async () =>
+    test('blogs are returned as json', async () =>
     {
         await api
         .get('/api/blogs')
@@ -126,49 +120,47 @@ describe('Step 3: Add a blog post to DB', () =>
 {
     test('a valid blog can be added ', async () =>
     {
-        const users = await helper.usersInDb()
-        const user = users[0]
+        const blogsAtStart = await helper.blogsInDb()
 
-        console.log('users: ', users)
+        const fyscherLogin = 
+        {
+            "username": helper.Fyscher.username,
+            "password": helper.Fyscher.password
+        }
+
+        const login = await api
+            .post('/api/login')
+            .send(fyscherLogin)
+            .expect(200)
+
+        const body = login._body
+        
         const newBlog =
         {
             title: 'WE HERE TO TEST',
             author: 'Fyscher',
             url: 'www.com',
             likes: 123,
-            user: user.id
         }
 
-        await api
+        const sentBlog = await api
             .post('/api/blogs')
+            .set('Authorization', `Bearer ${body.token}`)
             .send(newBlog)
             .expect(201)
-            .expect('Content-Type', /application\/json/)
-            
+        const returnedBlog = await Blog.findById(sentBlog._body.id).populate('user', { username: 1, name: 1 })
+        const savedBlog = returnedBlog.toJSON()
+        const newTotalBlogs = [...blogsAtStart, savedBlog]
+
         const blogsAtEnd = await helper.blogsInDb()
-        assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length + 1)
-        
-        const updatedDB = [...helper.initialBlogs, newBlog]
-        // strip the 'id' attribute to test deepStrictEqual
-        const dataAtEnd = blogsAtEnd.reduce((acc, obj) =>
-        {
-            const { id: remove, ...rest } = obj
-            acc.push(rest)
-            return acc
-        }, [])
-        const updatedDBAtEnd = updatedDB.reduce((acc, obj) =>
-        {
-            const { user: remove, ...rest } = obj
-            acc.push(rest)
-            return acc
-        }, [])
 
-        assert.deepStrictEqual(dataAtEnd, updatedDBAtEnd)
-        
-        const titles = blogsAtEnd.map(r => r.title)
-        assert(titles.includes('WE HERE TO TEST'))
-        
 
+        console.log('blogsAtStart: ', blogsAtStart)
+        console.log('blogsAtEnd: ', blogsAtEnd)
+        console.log('newTotalBlogs', newTotalBlogs)
+
+        assert.strictEqual(blogsAtStart.length +1, blogsAtEnd.length)
+        assert.deepStrictEqual(blogsAtEnd, newTotalBlogs)
     })
 })
 
@@ -176,64 +168,107 @@ describe('Step 4 and 5: Handle Missing Information', () =>
 {
     test('a blog without a title cannot be added ', async () =>
     {
-        const users = await User.find({})
-        const user = users[0]
-        console.log('user: ', user)
+        const blogsAtStart = await helper.blogsInDb()
+
+        const fyscherLogin = 
+        {
+            "username": helper.Fyscher.username,
+            "password": helper.Fyscher.password
+        }
+
+        const login = await api
+            .post('/api/login')
+            .send(fyscherLogin)
+            .expect(200)
+
+        const body = login._body
+
         const newBlog = 
         {
             author: 'Mr. NoTitle',
             url: 'www.com',
             likes: 55,
-            user: user._id
         }
 
         await api
             .post('/api/blogs')
+            .set('Authorization', `Bearer ${body.token}`)
             .send(newBlog)
             .expect(400)
 
         const blogsAtEnd = await helper.blogsInDb()
 
-        assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length)
+        assert.deepStrictEqual(blogsAtStart, blogsAtEnd)
     })
 
     test('a blog without a url cannot be added ', async () =>
     {
+        const blogsAtStart = await helper.blogsInDb()
+
+        const fyscherLogin = 
+        {
+            "username": helper.Fyscher.username,
+            "password": helper.Fyscher.password
+        }
+
+        const login = await api
+            .post('/api/login')
+            .send(fyscherLogin)
+            .expect(200)
+
+        const body = login._body
+
         const newBlog = 
         {
-            title: 'MISSING URL',
-            author: 'Frank',
-            likes: 55
+            title: 'Mr. Title',
+            author: 'Mr. NoURL',
+            likes: 55,
         }
 
         await api
             .post('/api/blogs')
+            .set('Authorization', `Bearer ${body.token}`)
             .send(newBlog)
             .expect(400)
 
         const blogsAtEnd = await helper.blogsInDb()
 
-        assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length)
+        assert.deepStrictEqual(blogsAtStart, blogsAtEnd)
+
     })
 
     test('a blog missing "Likes" info will be treated as 0', async () =>
     {
+        const fyscherLogin = 
+        {
+            "username": helper.Fyscher.username,
+            "password": helper.Fyscher.password
+        }
+
+        const login = await api
+            .post('/api/login')
+            .send(fyscherLogin)
+            .expect(200)
+
+        const body = login._body
+
         const newBlog = 
         {
-            title: 'No Likes',
+            title: 'Mr. Title',
             author: 'Mr. NoLikes',
             url: 'www.com',
         }
 
-        await api
+        const sentBlog = await api
             .post('/api/blogs')
+            .set('Authorization', `Bearer ${body.token}`)
             .send(newBlog)
             .expect(201)
-            .expect('Content-Type', /application\/json/)
 
-        const foundBlog = await helper.findBlog('No Likes')
+        const returnedBlog = await Blog.findById(sentBlog._body.id).populate('user', { username: 1, name: 1 })
+        const foundBlog = returnedBlog.toJSON()
 
-        assert.strictEqual(foundBlog[0].likes, 0)
+        assert.strictEqual(foundBlog.likes, 0)
     })
 })
         
@@ -243,37 +278,62 @@ describe('Exercises 4.13 - 4.14:', () =>
     {
         const blogsAtStart = await helper.blogsInDb()
         const blogToDelete = blogsAtStart[0]
+
+        const fyscherLogin =
+        {
+            "username": helper.Fyscher.username,
+            "password": helper.Fyscher.password
+        }
+
+        const login = await api
+            .post('/api/login')
+            .send(fyscherLogin)
+            .expect(200)
+
+        const body = login._body
     
         await api
             .delete(`/api/blogs/${blogToDelete.id}`)
+            .set('Authorization', `Bearer ${body.token}`)
             .expect(204)
     
         const blogsAtEnd = await helper.blogsInDb()
-    
-        const titles = blogsAtEnd.map(r => r.title)
-        
-        assert(!titles.includes(blogToDelete.title))
-        assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length - 1)
+        const testBlogsatEnd = blogsAtStart.filter( i => i.id !== blogToDelete.id)
+
+        assert.deepStrictEqual(blogsAtEnd, testBlogsatEnd)
     })
 
-    test('a blog can be updated by id', async () =>
+    test.only('a blog can be updated by id', async () =>
     {
         const blogsAtStart = await helper.blogsInDb()
         const updateBlog = blogsAtStart[0]
+        console.log('updateBlog: ', updateBlog)
         const updatedBlog = 
         {   
-            title: updateBlog.title,
-            author: updateBlog.author,
-            url: updateBlog.url,
-            likes: 69
+            likes: 69,
         }
 
+        const fyscherLogin =
+        {
+            "username": helper.Fyscher.username,
+            "password": helper.Fyscher.password
+        }
+
+        const login = await api
+            .post('/api/login')
+            .send(fyscherLogin)
+            .expect(200)
+
+        const body = login._body
+        console.log('body: ', body)
         await api
             .put(`/api/blogs/${updateBlog.id}`)
+            .set('Authorization', `Bearer ${body.token}`)
             .send(updatedBlog)
             .expect(204)
 
-        const foundBlog = await helper.findBlog('HTML is easy')
+        const foundBlog = await helper.findBlog(updateBlog.title)
+        console.log('foundBlog: ', foundBlog)
         assert.strictEqual(foundBlog[0].likes, updatedBlog.likes)
     })
 
@@ -286,16 +346,17 @@ describe('How well Tokens are handled:', () =>
         const blogsAtStart = await helper.blogsInDb()
         const blogToDelete = blogsAtStart[0]
 
-        const wrongToken = loggedInUser._body.token
+        const users = await helper.usersInDb()
+        const fyschman = users[1]
 
-        const result = await api
+        const wrongToken = fyschman.token
+
+        await api
             .delete(`/api/blogs/${blogToDelete.id}`)
             .set('Authorization', `Bearer ${wrongToken}`)
             .expect(401)
 
         const blogsAtEnd = await helper.blogsInDb()
-
-        console.log('result.error: ', result.error)
 
         assert.deepStrictEqual(blogsAtStart, blogsAtEnd)
     })

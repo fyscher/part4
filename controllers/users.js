@@ -20,12 +20,10 @@ usersRouter.post('/', async (request, response) =>
                 name,
                 passwordHash,
             })
-            console.log('------------')
-            console.log(`hash for ${username}: `, passwordHash)
-            console.log('------------')
             const savedUser = await user.save()
-            console.log('')
+
             console.log(`${username} saved!`)
+            
             response.status(201).json(savedUser)
         }
     }
@@ -37,6 +35,12 @@ usersRouter.get('/', async (request, response) =>
 {
     const users = await User.find({}).populate('blogs', { title: 1, author: 1, url: 1, likes: 1 })
     response.json(users)
+})
+
+usersRouter.delete('/:id', async (request, response) =>
+{
+    await User.findByIdAndDelete(request.params.id)
+    response.status(204).end()
 })
 
 

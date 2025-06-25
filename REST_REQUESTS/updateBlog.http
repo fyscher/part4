@@ -1,0 +1,10 @@
+PUT http://localhost:3001/api/blogs/685b7f5685336cddabf6a687
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImZ5c2NoZXIiLCJpZCI6IjY4NWI3ZjU2ODUzMzZjZGRhYmY2YTY3ZCIsImlhdCI6MTc1MDgyNzM3OCwiZXhwIjoxNzUwODMwOTc4fQ.wbEzevxtd-y22N7gpITk1SwsRMTor0c2WD7cbc7PPtY
+
+{
+    "title": "BRAND NEW",
+    "author": "BRAND NEW",
+    "url": "BRAND NEW.com",
+    "likes": 69420
+}
