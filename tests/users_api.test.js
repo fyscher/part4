@@ -5,68 +5,84 @@ const supertest = require('supertest')
 const app = require('../app')
 const helper = require('./test_helper')
 const User = require('../models/user')
-const bcrypt = require('bcrypt')
 const api = supertest(app)
 
-describe.only('when there is initially one user in db', () =>
+describe('when there is initially one user in db', () =>
 {
     beforeEach( async () =>
     {
         await User.deleteMany({})
 
-        const passwordHash = await bcrypt.hash('sekret', 10)
-        const user = new User({ username: 'root', passwordHash })
-        console.log('hash ', passwordHash)
+        await api
+            .post('/api/users')
+            .set('Content-Type', 'application/json')
+            .send(helper.Fyscher)
+            .expect(201)
 
-        await user.save()
+        const loggedInFyscher = await api
+            .post('/api/login')
+            .set('Content-Type', 'application/json')
+            .send({
+                "username": helper.Fyscher.username,
+                "password": helper.Fyscher.password
+            })
+            .expect(200)
+    
+        const fyscher = loggedInFyscher.request.response._body
+
+        const newBlog1 =
+        {
+            title: 'HTML is easy',
+            author: 'FB Red',
+            url: 'www.com',
+            likes: 6969,
+        }
+
+        await api
+            .post('/api/blogs')
+            .set('Content-Type', 'application/json')
+            .set('Authorization', `Bearer ${fyscher.token}`)
+            .send(newBlog1)
+            .expect(201)
+        
     })
 
     test('creation succeeds with a fresh username', async () =>
     {
         const usersAtStart = await helper.usersInDb()
 
-        const newUser =
-        {
-            username: 'fysch',
-            name: 'Fyscher',
-            password: 'FUCKKKK'
-        }
-
-        await api
+        const sentUser = await api
             .post('/api/users')
-            .send(newUser)
-            .expect(201)
+            .set('Content-Type', 'application/json')
+            .send(helper.Fyschman)
             .expect('Content-Type', /application\/json/)
+            .expect(201)
+
+        const returnedUser = await User.findById(sentUser._body.id).populate('blogs', { title: 1, author: 1, url: 1, likes: 1 })
+        const savedUser = returnedUser.toJSON()
+        
+        const newTotalUsers = [...usersAtStart, savedUser]
 
         const usersAtEnd = await helper.usersInDb()
-        assert.strictEqual(usersAtEnd.length, usersAtStart.length + 1 )
-
-        const usernames = usersAtEnd.map(u => u.username)
-        assert(usernames.includes(newUser.username))
+        
+        assert.deepStrictEqual(usersAtEnd, newTotalUsers)
     })
 
     test('creation fails with proper statuscode and message if username already taken', async () =>
     {
         const usersAtStart = await helper.usersInDb()
 
-        const newUser = 
-        {
-            username: 'root',
-            name: 'Superuser',
-            password: 'fookenHell'
-        }
-
         const result = await api
             .post('/api/users')
-            .send(newUser)
+            .set('Content-Type', 'application/json')
+            .send(helper.Fyscher)
             .expect(400)
-            .expect('Content-Type', /application\/json/)
 
         const usersAtEnd = await helper.usersInDb()
 
         assert(result.body.error.includes('E11000 duplicate key error collection'))
 
-        assert.strictEqual(usersAtEnd.length, usersAtStart.length)
+        assert.deepStrictEqual(usersAtStart, usersAtEnd)
     })
 
     test('creation fails if username received is below the minimum character length', async () =>
